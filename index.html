@@ -93,7 +93,7 @@ h2 .add{margin-inline-start:auto}
 @media screen and (max-width:760px){.grid,.grid.two{grid-template-columns:1fr}}
 .f{display:flex; flex-direction:column; gap:3px}
 .f label{font-size:11.5px; font-weight:600; color:var(--muted)}
-input[type="text"],input[type="date"],input[type="time"],textarea,select{
+input[type="text"],input[type="date"],input[type="time"],input[type="email"],input[type="tel"],textarea,select{
   font:inherit; font-size:13.5px; color:var(--ink); background:var(--paper);
   border:1px solid var(--line); border-radius:var(--radius); padding:6px 9px; width:100%;
   font-family:inherit;
@@ -101,6 +101,8 @@ input[type="text"],input[type="date"],input[type="time"],textarea,select{
 input:hover,textarea:hover,select:hover{border-color:var(--line-strong)}
 textarea{resize:vertical; min-height:64px; line-height:1.75}
 input::placeholder,textarea::placeholder{color:#bcb1cb}
+input.ltr{direction:ltr; text-align:right; font-variant-numeric:tabular-nums}
+input.ltr::placeholder{text-align:right}
 
 /* ================= tables ================= */
 .tw{overflow-x:auto}
@@ -166,7 +168,7 @@ table textarea{min-height:38px}
   .doc-title span{font-size:7.5pt}
 
   /* fields keep a form-like ruled look instead of disappearing */
-  input[type="text"],input[type="date"],input[type="time"],select{
+  input[type="text"],input[type="date"],input[type="time"],input[type="email"],input[type="tel"],select{
     border:none!important; border-bottom:.5pt dotted #8f7ba8!important; border-radius:0!important;
     padding:1pt 2pt!important; background:transparent!important; color:#000!important;
     font-size:10pt!important; min-height:14pt;
@@ -210,7 +212,7 @@ table textarea{min-height:38px}
 <body>
 
 <div class="toolbar no-print">
-  <div class="brand">محضر اجتماع — نموذج إلكتروني<small>الإدارة التنفيذية للاتصالات وتقنية المعلومات · الإصدار 1.5</small></div>
+  <div class="brand">محضر اجتماع — نموذج إلكتروني<small>الإدارة التنفيذية للاتصالات وتقنية المعلومات · الإصدار 1.8</small></div>
   <span class="pill" id="apiStatus" data-s="busy">جارٍ الاتصال…</span>
   <button class="btn" type="button" id="seqBtn">ضبط الترقيم</button>
   <button class="btn" type="button" id="logoBtn">رفع الشعار</button>
@@ -221,6 +223,7 @@ table textarea{min-height:38px}
   <button class="btn" type="button" id="importBtn">استيراد JSON</button>
   <button class="btn" type="button" id="clearBtn">مسح النموذج</button>
   <button class="btn pri" type="button" id="saveSheetBtn">حفظ</button>
+  <button class="btn pri" type="button" id="sendBtn">إرسال المحضر</button>
   <button class="btn pri" type="button" id="wordBtn">تصدير Word</button>
   <button class="btn pri" type="button" id="pdfBtn">تصدير PDF / طباعة</button>
   <input type="file" id="logoFile" accept="image/*" hidden>
@@ -261,13 +264,6 @@ table textarea{min-height:38px}
       </div>
       <div class="f"><label>مكان الاجتماع / رابط الاتصال المرئي</label><input type="text" data-f="place" placeholder="قاعة الاجتماعات — مبنى الإدارة / Teams"></div>
       <div class="f"><label>التاريخ الميلادي</label><input type="date" data-f="dateG"></div>
-      <div class="f"><label>التاريخ الهجري</label><input type="text" data-f="dateH" placeholder="١٤٤٨/٠٣/١٥هـ"></div>
-      <div class="f"><label>اليوم</label>
-        <select data-f="day">
-          <option value="">—</option><option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option>
-          <option>الأربعاء</option><option>الخميس</option><option>الجمعة</option><option>السبت</option>
-        </select>
-      </div>
       <div class="f"><label>من الساعة</label><input type="time" data-f="from"></div>
       <div class="f"><label>إلى الساعة</label><input type="time" data-f="to"></div>
       <div class="f"><label>الجهة الداعية</label><input type="text" data-f="host" placeholder="إدارة عمليات تقنية المعلومات"></div>
@@ -287,7 +283,7 @@ table textarea{min-height:38px}
     <div class="tw">
       <table id="t-attendees">
         <thead><tr>
-          <th style="width:34px">م</th><th>الاسم</th><th>الجهة / الوحدة</th><th>الصفة في الاجتماع</th><th>التوقيع</th><th class="act no-print"></th>
+          <th style="width:34px">م</th><th>الاسم</th><th>الجهة / الوحدة</th><th>البريد الإلكتروني</th><th style="width:130px">رقم الجوال</th><th class="act no-print"></th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -378,7 +374,7 @@ table textarea{min-height:38px}
 
   <div class="foot">
     <span>نموذج: ICTD-FRM-MOM-01</span>
-    <span>الإصدار 1.5</span>
+    <span>الإصدار 1.8</span>
     <span>الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي</span>
   </div>
 </div>
@@ -394,7 +390,7 @@ table textarea{min-height:38px}
   var STATUS = ["لم يبدأ","قيد التنفيذ","منجز","متعثر","مؤجل"];
 
   var TABLES = {
-    attendees:{cols:[{t:"text",ph:"الاسم الثلاثي"},{t:"text",ph:"الوحدة"},{t:"text",ph:"عضو / مقرر"},{t:"text",ph:""}], rows:4},
+    attendees:{cols:[{t:"text",ph:"الاسم الثلاثي"},{t:"text",ph:"الوحدة"},{t:"email",ph:"name@sr.edu.sa"},{t:"tel",ph:"05XXXXXXXX"}], rows:4},
     apologies:{cols:[{t:"text",ph:"الاسم"},{t:"text",ph:"الوحدة"},{t:"text",ph:"—"},{t:"text",ph:"—"}], rows:1},
     previous:{cols:[{t:"area",ph:"نص القرار السابق"},{t:"text",ph:"الاسم"},{t:"sel",o:STATUS},{t:"text",ph:"—"}], rows:2},
     agenda:{cols:[{t:"area",ph:"عنوان البند"},{t:"area",ph:"ملخص ما دار من نقاش ومداخلات الأعضاء"}], rows:3},
@@ -410,6 +406,8 @@ table textarea{min-height:38px}
     if(c.t==="area") return '<textarea placeholder="'+(c.ph||"")+'"></textarea>';
     if(c.t==="date") return '<input type="date">';
     if(c.t==="sel")  return '<select>'+c.o.map(function(o){return '<option>'+o+'</option>';}).join("")+'</select>';
+    if(c.t==="email") return '<input type="email" class="ltr" inputmode="email" autocomplete="email" placeholder="'+(c.ph||"")+'">';
+    if(c.t==="tel")   return '<input type="tel" class="ltr" inputmode="tel" autocomplete="tel" placeholder="'+(c.ph||"")+'">';
     return '<input type="text" placeholder="'+(c.ph||"")+'">';
   }
   function addRow(name, values){
@@ -543,7 +541,59 @@ table textarea{min-height:38px}
       });
   }
 
+  function attendeeEmails(){
+    var out = [];
+    document.querySelectorAll("#t-attendees tbody tr").forEach(function(tr){
+      var f = tr.querySelectorAll("input");
+      var v = f[2] ? f[2].value.trim() : "";
+      if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) out.push(v);
+    });
+    return out;
+  }
+
+  function postJson(url, body){
+    return fetch(url, {
+      method:"POST", redirect:"follow",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(body)
+    }).then(function(r){ return r.json(); });
+  }
+
+  function sendMinuteMail(){
+    var url = apiUrl();
+    if(!url){ toast("اضبط رابط الحفظ أولاً من «إعدادات الحفظ»."); return; }
+    var emails = attendeeEmails();
+    if(!emails.length){ toast("أضف البريد الإلكتروني للحضور أولاً."); return; }
+    if(!confirm("سيتم حفظ المحضر ثم إرساله إلى " + emails.length + " من الحضور مع نسخة PDF مرفقة.\n\nمتابعة؟")) return;
+
+    commitNo();
+    var payload = collect();
+    delete payload.logo;
+    setStatus("جارٍ الحفظ والإرسال…", "busy");
+
+    postJson(url, payload)
+      .then(function(res){
+        if(!res || !res.ok) throw new Error((res && res.error) || "save_failed");
+        noEl.value = res.minuteNo; autoNo = false;
+        return postJson(url, {action:"send", minuteNo: res.minuteNo});
+      })
+      .then(function(res){
+        if(res && res.ok){
+          setStatus("أُرسل إلى " + res.sent, "ok");
+          toast("تم إرسال المحضر إلى " + res.sent + " مستلماً" + (res.pdf ? " مع مرفق PDF." : " (تعذّر توليد PDF — أُرسل بالنص المنسّق)."));
+        } else {
+          setStatus("فشل الإرسال", "err");
+          toast("تعذّر الإرسال: " + ((res && res.error) === "no_recipients" ? "لا توجد عناوين بريد صالحة." : ((res && res.error) || "خطأ غير معروف")));
+        }
+      })
+      .catch(function(){
+        setStatus("فشل الإرسال", "err");
+        toast("تعذّر الاتصال بخدمة الإرسال — تأكد من نشر آخر نسخة من Code.gs.");
+      });
+  }
+
   document.getElementById("saveSheetBtn").addEventListener("click", saveToSheet);
+  document.getElementById("sendBtn").addEventListener("click", sendMinuteMail);
   document.getElementById("cfgBtn").addEventListener("click", function(){
     var v = prompt("رابط خدمة الحفظ (Apps Script Web App ينتهي بـ /exec):", apiUrl());
     if(v === null) return;

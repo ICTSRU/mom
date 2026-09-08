@@ -2,7 +2,7 @@
 
 نموذج HTML عربي (RTL) لإعداد محاضر اجتماعات الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي، مع تصدير Word وPDF وحفظ مركزي في Google Sheet.
 
-**الإصدار:** 1.5 · **رمز النموذج:** ICTD-FRM-MOM-01
+**الإصدار:** 1.8 · **رمز النموذج:** ICTD-FRM-MOM-01
 
 ---
 
@@ -21,6 +21,8 @@
 - **ترقيم تلقائي متسلسل** بصيغة `ICTD-MOM-YYYY-NNN` — مركزي عبر Google Sheet عند ربطه، ومحلي عند عدم الربط
 - **حفظ مركزي** في Google Sheet مع تحديث المحضر نفسه عند إعادة الحفظ (upsert برقم المحضر)
 - **سجل قرارات تلقائي** — كل قرار يُنسخ في تبويب `Decisions` بمسؤوله وتاريخ استحقاقه وحالته
+- **إرسال المحضر بالبريد** لجميع الحضور برسالة عربية منسّقة ومرفق PDF
+- **تذكيرات آلية يومية** لمهام المتابعة المستحقة والمتأخرة، لكل مسؤول على حدة، مع ملخص إداري يومي
 - تصدير **Word** (`.doc` منسّق RTL) و**PDF** (طباعة A4 مطابقة لتنسيق الصفحة)
 - حفظ مسودة محلي + تصدير/استيراد JSON
 - إضافة وحذف صفوف في كل جدول مع ترقيم تلقائي
@@ -42,7 +44,8 @@ Settings ▸ Pages ▸ Source: main ▸ /(root)
 1. افتح ملف **ICTD Meeting Minutes - Data** في Google Sheets
 2. `Extensions ▸ Apps Script` — احذف المحتوى وألصق `apps-script/Code.gs`
 3. شغّل الدالة `setup` مرة واحدة لإنشاء التبويبين `Minutes` و`Decisions`
-4. `Deploy ▸ New deployment ▸ Web app`
+4. شغّل `installReminderTrigger` مرة واحدة لتفعيل التذكيرات اليومية (7:00 صباحاً بتوقيت الرياض)
+5. `Deploy ▸ New deployment ▸ Web app`
    - **Execute as:** Me
    - **Who has access:** Anyone
 5. انسخ رابط `/exec`
@@ -63,15 +66,30 @@ var API_URL = "https://script.google.com/macros/s/AKfycbz.../exec";
 | `GET ?action=next&year=2026` | `{ ok, minuteNo }` — الرقم التالي المتاح |
 | `GET ?action=list` | `{ ok, rows }` — فهرس المحاضر |
 | `GET ?action=get&no=ICTD-MOM-2026-001` | `{ ok, data }` — المحضر كاملاً بصيغة JSON |
+| `GET ?action=open` | `{ ok, rows }` — كل القرارات المفتوحة عبر المحاضر |
 | `POST` (جسم JSON من النموذج) | `{ ok, minuteNo, created }` — إضافة أو تحديث |
+| `POST {action:'send', minuteNo}` | `{ ok, sent, recipients }` — إرسال المحضر بالبريد |
 
 ## بنية ملف البيانات
 
 **تبويب `Minutes`** — صف واحد لكل محضر (22 عموداً، آخرها `PayloadJSON` يحوي المحضر كاملاً لإعادة تحميله).
 
-**تبويب `Decisions`** — صف واحد لكل قرار: `MinuteNo · DateG · Seq · Decision · Owner · DueDate · Status · MeetingTitle · UpdatedAt` — يُعاد بناؤه لكل محضر عند كل حفظ، فيبقى مطابقاً للمحضر دائماً.
+**تبويب `Decisions`** — صف واحد لكل قرار: `MinuteNo · DateG · Seq · Decision · Owner · OwnerEmail · DueDate · Status · MeetingTitle · UpdatedAt · LastReminded` — يُعاد بناؤه لكل محضر عند كل حفظ، فيبقى مطابقاً للمحضر دائماً.
 
 ---
+
+## إعدادات البريد
+
+تُضبط من أعلى `apps-script/Code.gs`:
+
+| الثابت | الغرض | القيمة الحالية |
+|---|---|---|
+| `ADMIN_EMAIL` | نسخة إدارية من كل محضر + الملخص اليومي | `m.elmahdy@sr.edu.sa` |
+| `REMIND_DAYS` | بدء التذكير قبل الاستحقاق بعدد أيام | `3` |
+| `DONE_STATUSES` | الحالات التي توقف التذكير | منجز · ملغي · مغلق |
+| `SENDER_NAME` | الاسم الظاهر للمرسل | اسم الإدارة |
+
+> حد الإرسال اليومي في Google Workspace هو 1500 رسالة، وفي الحسابات المجانية 100 رسالة.
 
 ## ملاحظات تشغيلية
 
