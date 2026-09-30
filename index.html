@@ -142,6 +142,38 @@ table textarea{min-height:38px}
 .toast.show{opacity:1; transform:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
+/* ================= saved minutes dialog ================= */
+dialog.recall{
+  border:none; border-radius:6px; padding:0; width:min(900px, calc(100vw - 32px));
+  max-height:calc(100vh - 48px); color:var(--ink); background:var(--paper);
+  font-family:inherit; direction:rtl; box-shadow:0 12px 40px rgba(36,20,54,.35); overflow:hidden;
+}
+dialog.recall::backdrop{background:rgba(36,20,54,.45)}
+.rc-head{background:var(--purple-dark); color:#fff; padding:12px 16px; display:flex; align-items:center; gap:10px}
+.rc-head h3{margin:0; font-size:15px; font-weight:700; margin-inline-end:auto}
+.rc-head small{display:block; font-size:11px; font-weight:400; color:#c9b7e6}
+.rc-x{font:inherit; font-size:20px; line-height:1; background:transparent; color:#fff; border:none; cursor:pointer; padding:2px 8px; border-radius:3px}
+.rc-x:hover{background:rgba(255,255,255,.15)}
+.rc-bar{padding:12px 16px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--line); flex-wrap:wrap}
+.rc-bar input[type="search"]{
+  flex:1; min-width:200px; font:inherit; font-size:13.5px; color:var(--ink);
+  border:1px solid var(--line-strong); border-radius:var(--radius); padding:7px 10px;
+}
+.rc-info{font-size:12px; color:var(--muted); white-space:nowrap}
+.rc-ref{font:inherit; font-size:12px; font-weight:600; background:transparent; color:var(--purple); border:1px solid var(--line-strong); border-radius:var(--radius); padding:5px 11px; cursor:pointer}
+.rc-ref:hover{background:var(--purple-soft)}
+.rc-list{overflow:auto; max-height:calc(100vh - 230px)}
+.rc-list table{min-width:660px}
+.rc-list thead th{position:sticky; top:0; z-index:1}
+.rc-list td{padding:7px 8px; font-size:13px; vertical-align:middle}
+.rc-list tbody tr:hover{background:var(--purple-soft)}
+.rc-list tbody tr.cur{background:var(--blue-soft)}
+.ltr-cell{direction:ltr; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+.rc-upd{color:var(--muted); font-size:12px}
+.rc-msg{text-align:center; color:var(--muted); padding:26px 10px!important}
+.rc-open{font:inherit; font-size:12px; font-weight:700; background:var(--purple); color:#fff; border:none; border-radius:var(--radius); padding:4px 16px; cursor:pointer}
+.rc-open:hover{background:var(--purple-dark)}
+
 /* ================= print ================= */
 @page{size:A4; margin:13mm}
 @media print{
@@ -149,7 +181,7 @@ table textarea{min-height:38px}
     background:#fff!important; font-size:10.5pt;
     -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact;
   }
-  .toolbar,.note,.toast,.del,td.act,th.act,.no-print{display:none!important}
+  .toolbar,.note,.toast,.del,td.act,th.act,.no-print,dialog.recall{display:none!important}
   .sheet{max-width:none; margin:0; padding:0; border:none; box-shadow:none; border-radius:0}
 
   /* keep the on-screen column structure on paper */
@@ -212,7 +244,7 @@ table textarea{min-height:38px}
 <body>
 
 <div class="toolbar no-print">
-  <div class="brand">محضر اجتماع — نموذج إلكتروني<small>الإدارة التنفيذية للاتصالات وتقنية المعلومات · الإصدار 1.8</small></div>
+  <div class="brand">محضر اجتماع — نموذج إلكتروني<small>الإدارة التنفيذية للاتصالات وتقنية المعلومات · الإصدار 1.9</small></div>
   <span class="pill" id="apiStatus" data-s="busy">جارٍ الاتصال…</span>
   <button class="btn" type="button" id="seqBtn">ضبط الترقيم</button>
   <button class="btn" type="button" id="logoBtn">رفع الشعار</button>
@@ -222,6 +254,7 @@ table textarea{min-height:38px}
   <button class="btn" type="button" id="jsonBtn">تصدير JSON</button>
   <button class="btn" type="button" id="importBtn">استيراد JSON</button>
   <button class="btn" type="button" id="clearBtn">مسح النموذج</button>
+  <button class="btn pri" type="button" id="recallBtn">المحاضر المحفوظة</button>
   <button class="btn pri" type="button" id="saveSheetBtn">حفظ</button>
   <button class="btn pri" type="button" id="sendBtn">إرسال المحضر</button>
   <button class="btn pri" type="button" id="wordBtn">تصدير Word</button>
@@ -231,7 +264,7 @@ table textarea{min-height:38px}
 </div>
 
 <div class="note no-print">
-  زر <b>«حفظ»</b> يرسل المحضر إلى ملف Google Sheet المركزي (اضبط الرابط مرة واحدة من «إعدادات الحفظ»). لتصدير PDF اختر <b>Save as PDF</b> في وجهة الطباعة مع تفعيل <b>Background graphics</b>.
+  زر <b>«حفظ»</b> يرسل المحضر إلى ملف Google Sheet المركزي (اضبط الرابط مرة واحدة من «إعدادات الحفظ»). ولفتح محضر سابق وتعديله استخدم <b>«المحاضر المحفوظة»</b>. لتصدير PDF اختر <b>Save as PDF</b> في وجهة الطباعة مع تفعيل <b>Background graphics</b>.
 </div>
 
 <div class="sheet" id="doc">
@@ -374,10 +407,31 @@ table textarea{min-height:38px}
 
   <div class="foot">
     <span>نموذج: ICTD-FRM-MOM-01</span>
-    <span>الإصدار 1.8</span>
+    <span>الإصدار 1.9</span>
     <span>الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي</span>
   </div>
 </div>
+
+<dialog class="recall no-print" id="recallDlg" aria-labelledby="recallTitle">
+  <div class="rc-head">
+    <h3 id="recallTitle">المحاضر المحفوظة<small>المحاضر المخزّنة في ملف Google Sheet المركزي — اختر محضراً لفتحه وتعديله</small></h3>
+    <button class="rc-x" type="button" id="recallClose" aria-label="إغلاق">&times;</button>
+  </div>
+  <div class="rc-bar">
+    <input type="search" id="recallQ" placeholder="ابحث برقم المحضر أو العنوان أو رئيس الاجتماع أو التاريخ…" aria-label="بحث في المحاضر">
+    <span class="rc-info" id="recallInfo"></span>
+    <button class="rc-ref" type="button" id="recallRefresh">تحديث القائمة</button>
+  </div>
+  <div class="rc-list">
+    <table>
+      <thead><tr>
+        <th style="width:150px">رقم المحضر</th><th>عنوان الاجتماع</th><th style="width:100px">التاريخ</th>
+        <th style="width:150px">رئيس الاجتماع</th><th style="width:130px">آخر حفظ</th><th style="width:70px"></th>
+      </tr></thead>
+      <tbody id="recallBody"></tbody>
+    </table>
+  </div>
+</dialog>
 
 <div class="toast" id="toast"></div>
 
@@ -669,6 +723,7 @@ table textarea{min-height:38px}
     autoNo = true; refreshNo();
     setLogo(DEFAULT_LOGO);
     ls(function(){ localStorage.removeItem(LOGO_KEY); });
+    try{ history.replaceState(null, "", location.pathname); }catch(e){}
     toast("تم مسح النموذج.");
   });
 
@@ -767,6 +822,140 @@ table textarea{min-height:38px}
     download(new Blob(["﻿" + html], {type:"application/msword;charset=utf-8"}), fileStem()+".doc");
     toast("تم تصدير ملف Word — افتحه ببرنامج Word ثم احفظه بصيغة .docx عند الحاجة.");
   });
+
+  /* ---------- saved minutes: list, search, open ---------- */
+  var recallDlg   = document.getElementById("recallDlg");
+  var recallBody  = document.getElementById("recallBody");
+  var recallQ     = document.getElementById("recallQ");
+  var recallInfo  = document.getElementById("recallInfo");
+  var recallRows  = [];
+
+  function escH(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function fmtD(v){
+    if(!v) return "";
+    var s = String(v);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    var d = new Date(s);
+    if(isNaN(d.getTime())) return s;
+    var m = d.getMonth()+1, dd = d.getDate();
+    return d.getFullYear() + "-" + (m<10?"0":"") + m + "-" + (dd<10?"0":"") + dd;
+  }
+  function currentNo(){ return (noEl.value || "").trim(); }
+
+  /* does the form hold anything worth warning about before it is replaced? */
+  function hasContent(){
+    var d = collect(), skip = {docNo:1, type:1, classification:1};
+    var f = Object.keys(d.fields).some(function(k){ return !skip[k] && String(d.fields[k] || "").trim(); });
+    if(f) return true;
+    return Object.keys(d.tables).some(function(n){
+      return d.tables[n].some(function(r){
+        return r.some(function(v){ v = String(v || "").trim(); return v && STATUS.indexOf(v) < 0; });
+      });
+    });
+  }
+
+  function recallMsg(txt){ recallBody.innerHTML = '<tr><td colspan="6" class="rc-msg">' + escH(txt) + '</td></tr>'; }
+
+  function renderRecall(){
+    var q = recallQ.value.trim().toLowerCase(), cur = currentNo();
+    var rows = recallRows.filter(function(r){
+      if(!q) return true;
+      return [r.minuteNo, r.title, r.chair, r.secretary, r.place, r.type, fmtD(r.dateG)]
+        .join(" ").toLowerCase().indexOf(q) > -1;
+    });
+    recallInfo.textContent = q ? (rows.length + " من " + recallRows.length + " محضر") : (recallRows.length + " محضر");
+    if(!rows.length){ recallMsg(recallRows.length ? "لا توجد نتائج مطابقة للبحث." : "لا توجد محاضر محفوظة بعد."); return; }
+    recallBody.innerHTML = rows.map(function(r){
+      return '<tr' + (r.minuteNo === cur ? ' class="cur"' : '') + '>'
+        + '<td class="ltr-cell"><b>' + escH(r.minuteNo) + '</b></td>'
+        + '<td>' + escH(r.title || "—") + '</td>'
+        + '<td class="ltr-cell">' + escH(fmtD(r.dateG) || "—") + '</td>'
+        + '<td>' + escH(r.chair || "—") + '</td>'
+        + '<td class="ltr-cell rc-upd">' + escH(r.updated || fmtD(r.timestamp)) + '</td>'
+        + '<td><button class="rc-open" type="button" data-no="' + escH(r.minuteNo) + '">فتح</button></td></tr>';
+    }).join("");
+  }
+
+  function fetchRecall(){
+    var url = apiUrl();
+    recallMsg("جارٍ تحميل المحاضر…"); recallInfo.textContent = "";
+    fetch(withParam(url, "action=list"), {redirect:"follow"})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res || !res.ok){ recallMsg("تعذّر تحميل القائمة: " + ((res && res.error) || "استجابة غير متوقعة")); return; }
+        recallRows = (res.rows || []).filter(function(r){ return String(r.minuteNo || "").trim(); });
+        recallRows.forEach(function(r){ r.minuteNo = String(r.minuteNo).trim(); });
+        recallRows.sort(function(a, b){ return a.minuteNo < b.minuteNo ? 1 : a.minuteNo > b.minuteNo ? -1 : 0; });
+        renderRecall();
+      })
+      .catch(function(){ recallMsg("تعذّر الاتصال بخدمة الحفظ — تحقق من الاتصال أو من «إعدادات الحفظ»."); });
+  }
+
+  function openRecall(){
+    if(!apiUrl()){ toast("اضبط رابط الحفظ أولاً من «إعدادات الحفظ»."); return; }
+    recallQ.value = "";
+    if(typeof recallDlg.showModal === "function") recallDlg.showModal(); else recallDlg.setAttribute("open", "");
+    fetchRecall();
+    setTimeout(function(){ recallQ.focus(); }, 50);
+  }
+  function closeRecall(){ if(typeof recallDlg.close === "function") recallDlg.close(); else recallDlg.removeAttribute("open"); }
+
+  function growAll(){
+    document.querySelectorAll("#doc textarea").forEach(function(t){
+      t.style.height = "auto"; t.style.height = Math.max(38, t.scrollHeight + 2) + "px";
+    });
+  }
+
+  function loadMinute(no, skipConfirm){
+    var url = apiUrl();
+    no = String(no || "").trim();
+    if(!url || !no) return;
+    if(!skipConfirm && no !== currentNo() && hasContent()
+       && !confirm("سيُستبدل محتوى النموذج الحالي بالمحضر " + no + ".\nأي تعديلات غير محفوظة ستُفقد.\n\nمتابعة؟")) return;
+    setStatus("جارٍ فتح " + no + "…", "busy");
+    fetch(withParam(url, "action=get&no=" + encodeURIComponent(no)), {redirect:"follow"})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res || !res.ok || !res.data){
+          setStatus("تعذّر الفتح", "err");
+          toast(res && res.error === "not_found" ? ("المحضر " + no + " غير موجود في ملف الحفظ.") : "تعذّر فتح المحضر.");
+          return;
+        }
+        var d = res.data;
+        delete d.logo;                       // الشعار المدمج يبقى كما هو
+        d.fields = d.fields || {};
+        d.fields.docNo = d.fields.docNo || no;
+        apply(d);
+        growAll();
+        closeRecall();
+        setStatus("مفتوح · " + no, "ok");
+        toast("تم فتح المحضر " + no + " — زر «حفظ» يحدّث النسخة المحفوظة نفسها.");
+        try{ history.replaceState(null, "", location.pathname + "?no=" + encodeURIComponent(no)); }catch(e){}
+      })
+      .catch(function(){ setStatus("تعذّر الفتح", "err"); toast("تعذّر الاتصال بخدمة الحفظ."); });
+  }
+
+  document.getElementById("recallBtn").addEventListener("click", openRecall);
+  document.getElementById("recallClose").addEventListener("click", closeRecall);
+  document.getElementById("recallRefresh").addEventListener("click", fetchRecall);
+  recallQ.addEventListener("input", renderRecall);
+  recallQ.addEventListener("keydown", function(e){
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    var first = recallBody.querySelector(".rc-open");
+    if(first && recallBody.querySelectorAll(".rc-open").length === 1) loadMinute(first.getAttribute("data-no"));
+  });
+  recallBody.addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest(".rc-open") : null;
+    if(b) loadMinute(b.getAttribute("data-no"));
+  });
+  recallDlg.addEventListener("click", function(e){ if(e.target === recallDlg) closeRecall(); });   // click on backdrop
+
+  /* direct link: index.html?no=ICTD-MOM-2026-001 opens that minute */
+  (function(){
+    var m = /[?&]no=([^&#]+)/.exec(location.search);
+    if(m) loadMinute(decodeURIComponent(m[1].replace(/\+/g, " ")), true);
+  })();
 
   /* auto-grow textareas while typing */
   document.addEventListener("input", function(e){

@@ -1,7 +1,7 @@
 /**
  * ICTD Meeting Minutes — Google Apps Script backend
  * الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي
- * الإصدار 1.8
+ * الإصدار 1.9
  *
  * Deploy: Extensions ▸ Apps Script ▸ paste this file ▸ Run `setup` once
  *         ▸ Deploy ▸ New deployment ▸ Web app
@@ -10,7 +10,7 @@
  *
  * Endpoints
  *   GET  ?action=next&year=2026    -> { ok, minuteNo }   next free minute number
- *   GET  ?action=list              -> { ok, rows }       minute index
+ *   GET  ?action=list              -> { ok, rows }       minute index (newest first, formatted dates)
  *   GET  ?action=get&no=ICTD-...   -> { ok, data }       one full minute (JSON)
  *   GET  ?action=open              -> { ok, rows }       open decisions across all minutes
  *   POST { ...form JSON }          -> { ok, minuteNo }   upsert minute + rebuild its decisions
@@ -49,6 +49,10 @@ function esc(v){
 function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim()); }
 function pad3(n){ n = String(n); while(n.length < 3) n = '0' + n; return n; }
 function makeNo(year, seq){ return PREFIX + '-' + year + '-' + pad3(seq); }
+function fmt(v, pattern){
+  if(v instanceof Date) return Utilities.formatDate(v, TZ, pattern);
+  return String(v == null ? '' : v).trim();
+}
 function isDone(status){ return DONE_STATUSES.indexOf(String(status || '').trim()) > -1; }
 
 function sheetFor(name, headers){
@@ -127,12 +131,23 @@ function doGet(e){
       var sh = minutesSheet(), last = sh.getLastRow();
       if(last < 2) return json({ok:true, rows:[]});
       var vals = sh.getRange(2, 1, last - 1, 14).getValues();
-      return json({ok:true, rows: vals.map(function(v){
-        return {timestamp:v[0], minuteNo:v[1], title:v[2], type:v[3], dateG:v[5], chair:v[11]};
-      })});
+      var rows = vals
+        .filter(function(v){ return String(v[1]).trim() !== ''; })
+        .map(function(v){
+          return {
+            minuteNo:  String(v[1]).trim(),
+            title:     v[2], type: v[3], place: v[4],
+            dateG:     fmt(v[5], 'yyyy-MM-dd'),
+            chair:     v[11], secretary: v[12],
+            updated:   fmt(v[0], 'yyyy-MM-dd HH:mm'),
+            timestamp: fmt(v[0], "yyyy-MM-dd'T'HH:mm:ss")
+          };
+        });
+      rows.sort(function(a, b){ return a.minuteNo < b.minuteNo ? 1 : a.minuteNo > b.minuteNo ? -1 : 0; });
+      return json({ok:true, rows: rows});
     }
     if(action === 'open') return json({ok:true, rows: openDecisions()});
-    return json({ok:true, service:'ICTD Meeting Minutes API', version:'1.8'});
+    return json({ok:true, service:'ICTD Meeting Minutes API', version:'1.9'});
   }catch(err){ return json({ok:false, error:String(err)}); }
 }
 
