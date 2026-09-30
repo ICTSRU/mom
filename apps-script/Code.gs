@@ -1,7 +1,7 @@
 /**
  * ICTD Meeting Minutes — Google Apps Script backend
  * الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي
- * الإصدار 1.9
+ * الإصدار 2.0
  *
  * Deploy: Extensions ▸ Apps Script ▸ paste this file ▸ Run `setup` once
  *         ▸ Deploy ▸ New deployment ▸ Web app
@@ -147,7 +147,7 @@ function doGet(e){
       return json({ok:true, rows: rows});
     }
     if(action === 'open') return json({ok:true, rows: openDecisions()});
-    return json({ok:true, service:'ICTD Meeting Minutes API', version:'1.9'});
+    return json({ok:true, service:'ICTD Meeting Minutes API', version:'2.0'});
   }catch(err){ return json({ok:false, error:String(err)}); }
 }
 
