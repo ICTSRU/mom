@@ -2,7 +2,14 @@
 
 نموذج HTML عربي (RTL) لإعداد محاضر اجتماعات الإدارة التنفيذية للاتصالات وتقنية المعلومات — جامعة سليمان الراجحي، مع تصدير Word وPDF وحفظ مركزي في Google Sheet.
 
-**الإصدار:** 2.0 · **رمز النموذج:** ICTD-FRM-MOM-01
+**الإصدار:** 2.1 · **رمز النموذج:** ICTD-FRM-MOM-01 · **الحماية:** SRU Secure Access Kit v1.4
+
+> **اعتباراً من 2.1** لا يعمل النموذج إلا بعد تسجيل الدخول بحساب Google الجامعي (`@sr.edu.sa`) **ومن ضمن قائمة المصرّح لهم**. النموذج نفسه أصبح داخل Apps Script، وصفحة GitHub أصبحت شاشة الدخول فقط.
+
+```
+ictsru.github.io/<repo>   →   Google sign-in (@sr.edu.sa)   →   Apps Script Web App (النموذج)
+   (شاشة دخول ITOC)              (صفحة Google نفسها)            (فحص النطاق + AllowedUsers + AccessLog)
+```
 
 ---
 
@@ -10,12 +17,20 @@
 
 | الملف | الوصف |
 |---|---|
-| `index.html` | النموذج الكامل — ملف واحد مستقل، الشعار مدمج بداخله |
-| `apps-script/Code.gs` | خدمة الحفظ (Google Apps Script Web App) المرتبطة بملف Google Sheet |
+| `index.html` | **شاشة الدخول** على GitHub Pages (هوية ITOC) — لا تحوي بيانات ولا روابط داخلية سوى رابط `/exec` |
+| `assets/` | شعارات SRU وICTD وITOC لشاشة الدخول |
+| `apps-script/Code.gs` | الخادم: فحص الوصول + سجل الدخول + الحفظ والترقيم والإرسال والتذكيرات |
+| `apps-script/Index.html` | **النموذج الكامل** (يُخدم من Apps Script) مع شريط الهوية وبريد المستخدم والتذييل |
+| `apps-script/Logos.html` | الشعارات الثلاثة مدمجة (من حزمة الوصول) |
+| `apps-script/Denied.html` | صفحة «غير مصرح» للحسابات الخارجية أو غير المدرجة |
+| `apps-script/appsscript.json` | البيان: `executeAs: USER_DEPLOYING` · `access: DOMAIN` |
 | `CHANGELOG.md` | سجل التغييرات بين الإصدارات |
 
 ## المزايا
 
+- **دخول محصور بحسابات الجامعة** + **قائمة مصرّح لهم** (تبويب `AllowedUsers`) — كل استدعاء للخادم يُعاد فحصه
+- **سجل دخول** تلقائي في تبويب `AccessLog` (البريد · التاريخ · الوقت · اليوم · النتيجة · الإصدار)
+- **توثيق من حفظ المحضر** — عمود `SavedBy` في تبويب `Minutes`، ورسالة المحضر تُرسل بعنوان «الرد» لمن أرسلها
 - شعار **ITOC** أقصى يسار تذييل الصفحة، مرتبط ببوابة النماذج [ictsru.github.io/ITOC](https://ictsru.github.io/ITOC/) ويظهر في الطباعة وPDF
 - ترويسة رسمية بشعار الإدارة (مدمج كـ `data URI` — لا يحتاج ملفات خارجية)
 - أقسام: بيانات الاجتماع · الحضور · المعتذرون · متابعة قرارات الاجتماع السابق · جدول الأعمال والمناقشات · القرارات ومهام المتابعة · التوصيات · التوقيعات
@@ -31,50 +46,76 @@
 
 ---
 
-## التشغيل السريع
+## التشغيل (الترقية من 2.0)
 
-### ١. النموذج
+### ١. خدمة Apps Script (ملف **ICTD Meeting Minutes - Data**)
 
-افتح `index.html` في المتصفح مباشرة، أو انشره عبر GitHub Pages:
-
-```
-Settings ▸ Pages ▸ Source: main ▸ /(root)
-```
-
-### ٢. خدمة الحفظ (Google Sheet)
-
-1. افتح ملف **ICTD Meeting Minutes - Data** في Google Sheets
-2. `Extensions ▸ Apps Script` — احذف المحتوى وألصق `apps-script/Code.gs`
-3. شغّل الدالة `setup` مرة واحدة لإنشاء التبويبين `Minutes` و`Decisions`
-4. شغّل `installReminderTrigger` مرة واحدة لتفعيل التذكيرات اليومية (7:00 صباحاً بتوقيت الرياض)
-5. `Deploy ▸ New deployment ▸ Web app`
+1. `Extensions ▸ Apps Script` — استبدل `Code.gs` بالنسخة الجديدة، ثم أضف ملفات HTML بالأسماء: `Index` · `Logos` · `Denied`
+2. (اختياري) `Project Settings ▸ Show "appsscript.json"` وألصق `apps-script/appsscript.json`
+3. راجع `DEFAULT_ALLOWED` أعلى `Code.gs` واحذف من لا يحتاج النموذج، ثم شغّل **`setupAccessList`** مرة واحدة
+   > ⚠️ قبل هذه الخطوة لا يدخل إلا `OWNER_EMAILS`
+4. شغّل `setup` مرة واحدة (يضيف عمود `SavedBy` دون المساس بالمحاضر السابقة)
+5. `Deploy ▸ Manage deployments ▸ ✏️` على النشر الحالي:
+   - **Version:** New version
    - **Execute as:** Me
-   - **Who has access:** Anyone
-5. انسخ رابط `/exec`
-6. الرابط **مثبّت مسبقاً** في `index.html` اعتباراً من الإصدار 1.5:
+   - **Who has access:** **Anyone within Sulaiman Al Rajhi University**
+   - يبقى رابط `/exec` كما هو. إن تعذّر تغيير الصلاحية في النشر الحالي فأنشئ نشراً جديداً وضع رابطه في `index.html` (CONFIG ▸ `WEB_APP_URL`)
+6. التذكيرات اليومية تبقى كما هي (`installReminderTrigger` لا يحتاج إعادة تشغيل)
+
+### ٢. شاشة الدخول (GitHub Pages)
+
+ارفع محتويات المجلد إلى المستودع نفسه — `index.html` الجديد هو شاشة الدخول. الإعداد في أعلى الملف:
 
 ```js
-var API_URL = "https://script.google.com/macros/s/AKfycbz.../exec";
+var CONFIG = { WEB_APP_URL: "…/exec", TITLE: "الدخول إلى نموذج محضر اجتماع", VERSION: "2.1", KEY: "ictd_mom" };
 ```
 
-> يعمل الحفظ لكل المستخدمين مباشرة دون إعداد فردي. زر **«إعدادات الحفظ»** يبقى متاحاً لتجاوز الرابط محلياً عند إعادة النشر بإصدار جديد من الخدمة.
+- الروابط القديمة `…/index.html?no=ICTD-MOM-2026-001` تبقى صالحة: تُمرَّر إلى المنصة بعد الدخول
+- «تخطَّ هذه الشاشة» يُفتح مجدداً بإضافة `#login` للرابط
+
+### ٣. الاختبار
+
+حسابك ✓ · نافذة خاصة ← صفحة Google ✓ · حساب Gmail شخصي ← مرفوض ✓ · حساب جامعي غير مدرج ← «الوصول مقيّد» ✓ · تبويب `AccessLog` يسجّل المحاولات ✓
 
 ---
 
-## واجهة الخدمة (API)
+## إدارة الوصول
 
-| الطلب | الاستجابة |
+| المهمة | الإجراء |
 |---|---|
-| `GET ?action=next&year=2026` | `{ ok, minuteNo }` — الرقم التالي المتاح |
-| `GET ?action=list` | `{ ok, rows }` — فهرس المحاضر (الأحدث أولاً) |
-| `GET ?action=get&no=ICTD-MOM-2026-001` | `{ ok, data }` — المحضر كاملاً بصيغة JSON |
-| `GET ?action=open` | `{ ok, rows }` — كل القرارات المفتوحة عبر المحاضر |
-| `POST` (جسم JSON من النموذج) | `{ ok, minuteNo, created }` — إضافة أو تحديث |
-| `POST {action:'send', minuteNo}` | `{ ok, sent, recipients }` — إرسال المحضر بالبريد |
+| منح الوصول | أضف صفاً في `AllowedUsers` (البريد كاملاً + علامة `active`) |
+| إيقاف مؤقت | ألغِ علامة `active` |
+| السحب | احذف الصف |
+| فتح النموذج لكل منسوبي الجامعة | `ACCESS_MODE = 'DOMAIN'` |
+
+- يسري التغيير خلال دقيقتين (`ACCESS_CACHE_SECONDS`)
+- قائمة الملف (باسم `ICTD Meeting Minutes`): إعداد التبويبات · التذكيرات · قائمة المصرّح لهم · ملخص سجل الدخول (30 يوماً) · حذف السجلات الأقدم من 180 يوماً · رابط المنصة
+- أبقِ ملف البيانات **خاصاً** — فيه بريد المنسوبين وسجل الدخول
+
+---
+
+## واجهة الخادم (google.script.run)
+
+كل دالة تبدأ بـ `requireSruUser_()` — لا توجد واجهة مفتوحة للعموم.
+
+| الدالة | الاستجابة |
+|---|---|
+| `apiNext(year)` | `{ ok, minuteNo }` — الرقم التالي المتاح |
+| `apiList()` | `{ ok, rows }` — فهرس المحاضر (الأحدث أولاً) |
+| `apiGet(no)` | `{ ok, data }` — المحضر كاملاً |
+| `apiOpen()` | `{ ok, rows }` — كل القرارات المفتوحة |
+| `apiSave(payload)` | `{ ok, minuteNo, created }` — إضافة أو تحديث |
+| `apiSend(minuteNo)` | `{ ok, sent, recipients }` — إرسال المحضر بالبريد |
+
+> أُزيلت واجهة JSON المفتوحة (`?action=…` و`POST`) الموجودة في 2.0.
 
 ## بنية ملف البيانات
 
-**تبويب `Minutes`** — صف واحد لكل محضر (22 عموداً، آخرها `PayloadJSON` يحوي المحضر كاملاً لإعادة تحميله).
+**تبويب `Minutes`** — صف واحد لكل محضر (23 عموداً: العمود 22 `PayloadJSON` يحوي المحضر كاملاً لإعادة تحميله، والعمود 23 `SavedBy` بريد من حفظه).
+
+**تبويب `AllowedUsers`** — `email · name · role · active · notes`
+
+**تبويب `AccessLog`** — `timestamp · date · time · day · email · result · version`
 
 **تبويب `Decisions`** — صف واحد لكل قرار: `MinuteNo · DateG · Seq · Decision · Owner · OwnerEmail · DueDate · Status · MeetingTitle · UpdatedAt · LastReminded` — يُعاد بناؤه لكل محضر عند كل حفظ، فيبقى مطابقاً للمحضر دائماً.
 
@@ -97,15 +138,16 @@ var API_URL = "https://script.google.com/macros/s/AKfycbz.../exec";
 
 1. زر **«المحاضر المحفوظة»** ▸ ابحث بالرقم أو العنوان ▸ **فتح**
 2. عدّل ثم اضغط **«حفظ»** — يُحدَّث الصف نفسه في `Minutes` ويُعاد بناء قراراته في `Decisions`
-3. للمشاركة انسخ الرابط من شريط العنوان: `…/index.html?no=ICTD-MOM-2026-001`
+3. للمشاركة انسخ الرابط من شريط العنوان (`…/exec?no=ICTD-MOM-2026-001`) أو استخدم رابط GitHub مع `?no=` — يمرّ المستلم بشاشة الدخول أولاً
 
-> عند تحديث `Code.gs` استخدم `Deploy ▸ Manage deployments ▸ Edit ▸ Version: New version` ليبقى رابط `/exec` المثبّت كما هو.
+> عند تحديث `Code.gs` استخدم `Deploy ▸ Manage deployments ▸ Edit ▸ Version: New version` ليبقى رابط `/exec` كما هو.
 
 ## ملاحظات تشغيلية
 
-- بدون ربط الخدمة يعمل النموذج كاملاً محلياً، والترقيم يصبح لكل جهاز على حدة
-- الشعار ومسودة العمل تُحفظان في `localStorage` للمتصفح الحالي فقط
-- عند الطباعة فعّل **Background graphics** لظهور عناوين الأقسام والشعار
+- الحفظ والترقيم المركزي يعملان فقط بعد الدخول؛ «حفظ محلي» وتصدير/استيراد JSON يبقيان على جهاز المستخدم
+- المسودة المحلية والشعار المرفوع تُحفظان في `localStorage` للمتصفح الحالي فقط
+- عند الطباعة فعّل **Background graphics** — شريط الشعارات وتذييل المنصة لا يظهران في الطباعة ولا في Word
+- زر «إعدادات الحفظ» أُزيل لأن الخادم أصبح جزءاً من المنصة نفسها
 
 ## الترخيص والملكية
 
