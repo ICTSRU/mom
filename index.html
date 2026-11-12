@@ -27,7 +27,7 @@
   (function () {
     try {
       /* ITOC single sign-on: one shared flag for every landing page on ictsru.github.io (valid 30 days; #sso-off clears it) */
-      var ssoOk = (Date.now() - (+localStorage.getItem("itoc_sso") || 0)) < 2592000000;
+      var ssoOk = location.hash === "#itoc" || (Date.now() - (+localStorage.getItem("itoc_sso") || 0)) < 2592000000;   /* #itoc = opened from the ITOC index (already signed in) */
       if (location.hash === "#sso-off") { localStorage.removeItem("itoc_sso"); ssoOk = false; }
       if (location.hash !== "#login" && location.hash !== "#sso-off" && (localStorage.getItem(CONFIG.KEY + "_skip_intro") === "1" || ssoOk) && /^https:\/\/script\.google\.com\//.test(WEB_APP_URL)) { localStorage.setItem("itoc_sso", String(Date.now())); location.replace(WEB_APP_URL); }
     } catch (e) {}
